@@ -12,36 +12,40 @@ import edu.princeton.cs.algs4.WeightedQuickUnionUF;
  */
 public class Percolation {
 
-//    private int[][] grid;
     private boolean[][] openGrid;
-    private boolean[][] fullGrid;
     private int n;
+    private int n2;
     private boolean percolates;
     private WeightedQuickUnionUF unionList;
+    // 2 uf, there is probably a better solution
+    private WeightedQuickUnionUF fullList;
 
     public Percolation(int n){
         if (n < 1)
             throw new IllegalArgumentException();
-        int n2 = n*n;
+        n2 = n*n;
         openGrid = new boolean[n][n];
-        fullGrid = new boolean[n][n];
+        // for constant lookup of full
+        fullList = new WeightedQuickUnionUF(n2 + 1);
         // 2 extra to check faster if top is connected to bottom
-        unionList = new WeightedQuickUnionUF(n*n + 2);
+        unionList = new WeightedQuickUnionUF(n2 + 2);
         this.n = n;
         // initialize grids with false
         for (int i = 0; i < n2; i++) {
             openGrid[i/n][i%n] = false;
-            fullGrid[i/n][i%n] = false;
         }
         // connect first field to the first row, last field to last row
         for (int i = 1; i <= n; i++) {
             unionList.union(0, i);
-            unionList.union(n2, n2 - i);
+            fullList.union(0, i);
+            unionList.union(n2 + 1, n2  + 1 - i);
+            System.out.println("connected 0 with " + String.valueOf(i));
+            System.out.println("connected " + String.valueOf(n2 + 1) + " and " + String.valueOf(n2 + 1 - i));
         }
     }
     // resolve grid position to position in the unionList
     private int pointToNum(int i, int j) {
-        return 1 + (i-1)*n + (j-1)*n;
+        return (i-1)*n + j;
         
     }
     // return every possible neighboring point
@@ -61,11 +65,11 @@ public class Percolation {
             res[cnt][1] = j + 1;
         }
         if (hasTop == 1) {
-            res[--cnt][0] = i + 1;
+            res[--cnt][0] = i - 1;
             res[cnt][1] = j;
         }
         if (hasBottom == 1) {
-            res[--cnt][0] = i - 1;
+            res[--cnt][0] = i + 1;
             res[cnt][1] = j;
         }
         return res;
@@ -74,21 +78,21 @@ public class Percolation {
     public void open(int i, int j){
         checkInput(i, j);
         // do nothing if it is already open
-        if (openGrid[i][j])
+        if (openGrid[i-1][j-1])
             return;
         // set the field to open
-        openGrid[i][j] = true;
-        // set full if it is in the first row
-        if (i == 0)
-            fullGrid[i][j] = true;
+        openGrid[i-1][j-1] = true;
         int[][] neighs = getNeighs(i, j);
         // for every neighboring point, check if it is open. If it is, connect
         // them.
         for (int[] n : neighs) {
-            if (openGrid[n[0]][n[1]]) {
-            unionList.union(pointToNum(i, j), pointToNum(n[0], n[1]));
+            if (openGrid[n[0]-1][n[1]-1]) {
+                fullList.union(pointToNum(i, j), pointToNum(n[0], n[1]));
+                unionList.union(pointToNum(i, j), pointToNum(n[0], n[1]));
         }
         }
+        if (unionList.connected(0, n2 + 1))
+            percolates = true;
     }
 
     private void checkInput(int i, int j) {
@@ -98,20 +102,38 @@ public class Percolation {
 
     public boolean isOpen(int i, int j) {
         checkInput(i, j);
-        return openGrid[i][j];
+        return openGrid[i-1][j-1];
     }
-
+    // check if field 0 is connected to i,j
     public boolean isFull(int i, int j) {
         checkInput(i, j);
-        return fullGrid[i][j];
+        return fullList.connected(0, pointToNum(i, j));
     }
 
     public boolean percolates() {
         return percolates;
     }
-
+    // for testing
+    public static void printAr(int[][] ar) {
+        for (int[] a : ar) {
+            printAr(a);
+            System.out.println();
+        }
+    }
+    public static void printAr(int[] ar) {
+        for (int a : ar) {
+            System.out.print(a);
+        }
+    }
     public static void main(String[] args) {
         System.out.println("for testing");
-        Percolation p = new Percolation(1);
+        Percolation p = new Percolation(3);
+        p.open(1,1);
+        System.out.println(p.isFull(1, 1));
+        p.open(2,1);
+        System.out.println(p.isFull(2, 1));
+        p.open(3,1);
+        System.out.println(p.isFull(3, 1));
+
     }
 }
