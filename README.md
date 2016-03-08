@@ -1,5 +1,5 @@
 # algo
 stanford algorithm mooc implementations
 
-week 1 not finished
-week 2 complete with bonus
+week 1 complete (though no memory bonus)
+week 2 complete (with memory bonus)
