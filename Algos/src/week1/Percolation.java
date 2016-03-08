@@ -11,13 +11,15 @@ import edu.princeton.cs.algs4.WeightedQuickUnionUF;
  * @author Stefan
  */
 public class Percolation {
-
+    // this could be done in a byte array of length n2, resulting in memory gain
+    // of 2*n2 (current total is ~11n2 + 32n + 256 bytes)
+    // might update later 
     private boolean[][] openGrid;
+    private boolean[] topConn;
+    private boolean[] bottomConn;
     private int n;
     private int n2;
     private boolean percolates;
-    private WeightedQuickUnionUF unionList;
-    // 2 uf, there is probably a better solution
     private WeightedQuickUnionUF fullList;
 
     public Percolation(int n) {
@@ -25,16 +27,11 @@ public class Percolation {
             throw new IllegalArgumentException();
         n2 = n*n;
         openGrid = new boolean[n][n];
-        // for constant lookup of full
+        topConn = new boolean[n2 + 1];
+        bottomConn = new boolean[n2 + 1];
+        // manages the components
         fullList = new WeightedQuickUnionUF(n2 + 1);
-        // 2 extra to check faster if top is connected to bottom
-        unionList = new WeightedQuickUnionUF(n2 + 2);
         this.n = n;
-        // connect first field to the first row, last field to last row
-        for (int i = 1; i <= n; i++) {
-            unionList.union(0, i);
-            unionList.union(n2 + 1, n2  + 1 - i);
-        }
     }
     // resolve grid position to position in the unionList
     private int pointToNum(int i, int j) {
@@ -42,6 +39,7 @@ public class Percolation {
         
     }
     // return every possible neighboring point
+    // horribly long, maybe make it more compact
     private int[][] getNeighs(int i, int j) {
         int hasLeft = j > 1 ? 1 : 0;
         int hasTop = i > 1 ? 1 : 0;
@@ -73,21 +71,36 @@ public class Percolation {
         // do nothing if it is already open
         if (openGrid[i-1][j-1])
             return;
+        // vars to track if the (new) root must be updated
+        boolean setTop = false;
+        boolean setBottom = false;
         int pos = pointToNum(i, j);
-        if (i == 1)
-            fullList.union(0, pos);
+        if (i == 1) 
+            setBottom = true;
+        if (i == n) 
+            setTop = true;
+
         // set the field to open
         openGrid[i-1][j-1] = true;
         int[][] neighs = getNeighs(i, j);
         // for every neighboring point, check if it is open. If it is, connect
-        // them.
-        for (int[] n : neighs) {
-            if (openGrid[n[0]-1][n[1]-1]) {
-                fullList.union(pos, pointToNum(n[0], n[1]));
-                unionList.union(pos, pointToNum(n[0], n[1]));
+        // them and also check if it's connected to top / bottom row
+        for (int[] ne : neighs) {
+            if (openGrid[ne[0]-1][ne[1]-1]) {
+                int nPos = pointToNum(ne[0], ne[1]);
+                if (bottomConn[fullList.find(nPos)])
+                    setBottom = true;
+                if (topConn[fullList.find(nPos)])
+                    setTop = true;
+                fullList.union(pos, nPos);
+            }
         }
-        }
-        if (unionList.connected(0, n2 + 1))
+        int root = fullList.find(pos);
+        if (setBottom)
+            bottomConn[root] = true;
+        if (setTop)
+            topConn[root] = true;
+        if (bottomConn[root] && topConn[root])
             percolates = true;
     }
 
@@ -100,22 +113,16 @@ public class Percolation {
         checkInput(i, j);
         return openGrid[i-1][j-1];
     }
-    // check if field 0 is connected to i,j
+    // check if i,j is connected to the bottom row
     public boolean isFull(int i, int j) {
         checkInput(i, j);
-        return fullList.connected(0, pointToNum(i, j));
+        return bottomConn[fullList.find(pointToNum(i, j))];
     }
-
+    // check if there is a connection between top and bottom row
     public boolean percolates() {
         return percolates;
     }
-
+    // just for testing
     public static void main(String[] args) {
-        Percolation p = new Percolation(3);
-        System.out.println(p.isFull(1, 1));
-        p.open(1,1);
-        System.out.println(p.isFull(1, 1));
-        p.open(3,1);
-        p.open(2, 1);
     }
 }

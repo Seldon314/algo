@@ -3,6 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package week1;
 
 import edu.princeton.cs.algs4.StdRandom;
@@ -41,6 +42,7 @@ public class PercolationStats {
             int p1;
             int p2;
             int cnt = 0;
+            // this is not very efficient, but normally frac of open fields < .6
             do {
                 p1 = StdRandom.uniform(1, n+1);
                 p2 = StdRandom.uniform(1, n+1);
@@ -57,7 +59,6 @@ public class PercolationStats {
         return mean;
     }
 
-    
     public double stddev() {
         return stdDev;
     }
