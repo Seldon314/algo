@@ -3,7 +3,6 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package week1;
 
 import edu.princeton.cs.algs4.WeightedQuickUnionUF;
 /**
@@ -20,7 +19,7 @@ public class Percolation {
     // 2 uf, there is probably a better solution
     private WeightedQuickUnionUF fullList;
 
-    public Percolation(int n){
+    public Percolation(int n) {
         if (n < 1)
             throw new IllegalArgumentException();
         n2 = n*n;
@@ -30,17 +29,10 @@ public class Percolation {
         // 2 extra to check faster if top is connected to bottom
         unionList = new WeightedQuickUnionUF(n2 + 2);
         this.n = n;
-        // initialize grids with false
-        for (int i = 0; i < n2; i++) {
-            openGrid[i/n][i%n] = false;
-        }
         // connect first field to the first row, last field to last row
         for (int i = 1; i <= n; i++) {
             unionList.union(0, i);
-            fullList.union(0, i);
             unionList.union(n2 + 1, n2  + 1 - i);
-            System.out.println("connected 0 with " + String.valueOf(i));
-            System.out.println("connected " + String.valueOf(n2 + 1) + " and " + String.valueOf(n2 + 1 - i));
         }
     }
     // resolve grid position to position in the unionList
@@ -80,6 +72,9 @@ public class Percolation {
         // do nothing if it is already open
         if (openGrid[i-1][j-1])
             return;
+        int pos = pointToNum(i, j);
+        if (i == 1)
+            fullList.union(0, pos);
         // set the field to open
         openGrid[i-1][j-1] = true;
         int[][] neighs = getNeighs(i, j);
@@ -87,8 +82,8 @@ public class Percolation {
         // them.
         for (int[] n : neighs) {
             if (openGrid[n[0]-1][n[1]-1]) {
-                fullList.union(pointToNum(i, j), pointToNum(n[0], n[1]));
-                unionList.union(pointToNum(i, j), pointToNum(n[0], n[1]));
+                fullList.union(pos, pointToNum(n[0], n[1]));
+                unionList.union(pos, pointToNum(n[0], n[1]));
         }
         }
         if (unionList.connected(0, n2 + 1))
@@ -113,27 +108,13 @@ public class Percolation {
     public boolean percolates() {
         return percolates;
     }
-    // for testing
-    public static void printAr(int[][] ar) {
-        for (int[] a : ar) {
-            printAr(a);
-            System.out.println();
-        }
-    }
-    public static void printAr(int[] ar) {
-        for (int a : ar) {
-            System.out.print(a);
-        }
-    }
+
     public static void main(String[] args) {
-        System.out.println("for testing");
         Percolation p = new Percolation(3);
+        System.out.println(p.isFull(1, 1));
         p.open(1,1);
         System.out.println(p.isFull(1, 1));
-        p.open(2,1);
-        System.out.println(p.isFull(2, 1));
         p.open(3,1);
-        System.out.println(p.isFull(3, 1));
-
+        p.open(2, 1);
     }
 }
